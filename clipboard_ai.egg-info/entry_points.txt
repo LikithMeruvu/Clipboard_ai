@@ -1,0 +1,2 @@
+[console_scripts]
+clipboard-ai = clipboard_ai:main
