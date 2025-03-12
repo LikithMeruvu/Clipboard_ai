@@ -23,7 +23,54 @@ class SettingsDialog(QDialog):
         super().__init__(parent)
         self.setWindowTitle("Clipboard AI Settings")
         self.setMinimumWidth(450)
+        self.check_dependencies()
         self.init_ui()
+
+    def check_dependencies(self):
+        """Check if Ollama is installed and required models are available."""
+        try:
+            # Check if Ollama is available
+            models = ollama.list_models()
+            
+            # Check for required models
+            required_models = {
+                'text': config.get("selected_model", "deepseek-r1:8b"),
+                'image': config.get("image_model", "llava:latest")
+            }
+            
+            available_models = {model.get("name", "") for model in models}
+            missing_models = []
+            
+            for model_type, model_name in required_models.items():
+                if model_name not in available_models:
+                    missing_models.append(f"{model_type.capitalize()} model: {model_name}")
+            
+            if missing_models:
+                from PyQt6.QtWidgets import QMessageBox
+                msg = QMessageBox()
+                msg.setIcon(QMessageBox.Icon.Warning)
+                msg.setWindowTitle("Missing Required Models")
+                msg.setText("Some required AI models are not installed:")
+                msg.setInformativeText("\n".join(missing_models))
+                msg.setDetailedText(
+                    "To install missing models, use the following commands in terminal:\n" +
+                    "".join(f"ollama pull {required_models[model_type]}\n" 
+                           for model_type in required_models 
+                           if required_models[model_type] not in available_models)
+                )
+                msg.exec()
+                
+        except Exception as e:
+            from PyQt6.QtWidgets import QMessageBox
+            msg = QMessageBox()
+            msg.setIcon(QMessageBox.Icon.Critical)
+            msg.setWindowTitle("Ollama Not Found")
+            msg.setText("Unable to connect to Ollama")
+            msg.setInformativeText(
+                "Please ensure Ollama is installed and running.\n\n" 
+                "Visit https://ollama.ai for installation instructions."
+            )
+            msg.exec()
 
     def init_ui(self):
         layout = QVBoxLayout()
@@ -157,7 +204,7 @@ class SettingsDialog(QDialog):
         text_hotkey = self.text_hotkey_input.text().strip() or "ctrl+shift+u"
         config.set("hotkey", text_hotkey)
 
-        image_hotkey = self.image_hotkey_input.text().strip() or "ctrl+shift(,) "  # default comma
+        image_hotkey = self.image_hotkey_input.text().strip() or "ctrl+shift+o "  # default comma
         config.set("image_hotkey", image_hotkey)
 
         # ===== Models =====
