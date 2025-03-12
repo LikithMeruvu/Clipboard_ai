@@ -45,7 +45,7 @@ class OllamaAPI:
             
             # Add image data if provided
             if image_data:
-                data["images"] = [base64.b64encode(image_data).decode()]
+                data["options"]["images"] = [base64.b64encode(image_data).decode()]
 
             response = self.session.post(
                 f"{self.base_url}/api/generate",
@@ -86,6 +86,9 @@ class OllamaAPI:
                 payload["options"] = options
     
             # Make the API call
+            print(f"Sending request to {url} with model {model}")
+            print(f"Payload structure: {json.dumps({k: '...' if k == 'options' and 'images' in v else v for k, v in payload.items()}, indent=2)}")
+            
             response = requests.post(url, json=payload, stream=stream)
             response.raise_for_status()
             
@@ -95,12 +98,14 @@ class OllamaAPI:
                 return response.json()
                 
         except requests.exceptions.RequestException as e:
-            raise OllamaError(f"Failed to generate response: {str(e)}")
+            error_msg = f"Failed to generate response: {str(e)}"
+            print(error_msg)
+            raise Exception(error_msg)
 
     def generate_response(self, prompt: str, model: Optional[str] = None, on_stream: Optional[Callable[[str], None]] = None, timeout: int = 60) -> str:
         """Generate a response using the specified model with streaming support."""
-        # Determine if this is an image request
-        is_image_request = "[Image:" in prompt
+        # Determine if this is an image request by checking for the image tag format
+        is_image_request = "<image" in prompt
         request_type = "image" if is_image_request else "text"
         
         # Use image_model for image requests if no specific model is provided
@@ -113,16 +118,32 @@ class OllamaAPI:
         try:
             # Add timeout to prevent hanging indefinitely
             print(f"Sending request to {self.base_url}/api/generate")
+            
+            # For image requests, we need to extract the base64 image data
+            options = {
+                "temperature": 0.7,
+                "top_p": 0.9,
+            }
+            
+            # If this is an image request, extract the base64 data and use the images parameter
+            if is_image_request:
+                # Extract base64 image data from the prompt
+                import re
+                image_match = re.search(r'<image data:image/jpeg;base64,([^>]+)>', prompt)
+                if image_match:
+                    # Remove the image tag from the prompt
+                    base64_data = image_match.group(1)
+                    prompt = re.sub(r'<image data:image/jpeg;base64,[^>]+>', '', prompt).strip()
+                    # Add the image data to the options
+                    options["images"] = [base64_data]
+            
             response = self.session.post(
                 f"{self.base_url}/api/generate",
                 json={
                     "model": model,
                     "prompt": prompt,
                     "stream": True,
-                    "options": {
-                        "temperature": 0.7,
-                        "top_p": 0.9,
-                    }
+                    "options": options
                 },
                 stream=True,
                 timeout=timeout
@@ -198,22 +219,52 @@ class OllamaAPI:
             if response.status_code == 200:
                 return response.json()
             return {}
-        except requests.RequestException:
+        except requests.RequestException as e:
+            print(f"Error getting model info: {e}")
             return {}
 
-    def _process_stream(self, response) -> Generator[str, None, None]:
+    def _process_stream(self, response):
         """Process a streaming response from Ollama."""
+        for line in response.iter_lines():
+            if line:
+                try:
+                    yield json.loads(line)
+                except json.JSONDecodeError:
+                    continue
+                    
+    def chat(self, model: str, messages: List[Dict[str, Any]], stream: bool = True, options: dict = None) -> Union[dict, Generator]:
+        """Send a chat request to Ollama with support for multimodal inputs."""
         try:
-            for line in response.iter_lines():
-                if line:
-                    try:
-                        chunk = json.loads(line)
-                        if "response" in chunk:
-                            yield chunk["response"]
-                    except json.JSONDecodeError:
-                        continue
-        except Exception as e:
-            yield f"Error processing stream: {str(e)}"
+            # Prepare the API endpoint
+            url = f"{self.base_url}/api/chat"
+            
+            # Prepare the payload
+            payload = {
+                "model": model,
+                "messages": messages,
+                "stream": stream
+            }
+            
+            # Add options if provided
+            if options:
+                payload["options"] = options
+    
+            # Make the API call
+            print(f"Sending request to {url} with model {model}")
+            print(f"Payload structure: {json.dumps({k: '...' if k == 'messages' else v for k, v in payload.items()}, indent=2)}")
+            
+            response = requests.post(url, json=payload, stream=stream)
+            response.raise_for_status()
+            
+            if stream:
+                return self._process_stream(response)
+            else:
+                return response.json()
+                
+        except requests.exceptions.RequestException as e:
+            error_msg = f"Failed to generate chat response: {str(e)}"
+            print(error_msg)
+            raise Exception(error_msg)
 
 # Global Ollama API instance
 ollama = OllamaAPI()

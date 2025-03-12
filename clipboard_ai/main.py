@@ -254,8 +254,8 @@ class ClipboardAI(QObject):
                 
                 self.floating_dialog.chat_widget.add_message(user_message, is_user=True, image=image)
                 
-                # Add an empty assistant message that will be updated as the response streams in
-                self.floating_dialog.current_assistant_message = self.floating_dialog.chat_widget.add_message("", is_user=False)
+                # Don't create an empty assistant message yet - we'll create it when we have content
+                self.floating_dialog.current_assistant_message = None
                 
                 # Update status to show processing
                 self.floating_dialog.thinking_widget.thinking_label.setText("⏳ Processing image... 0%")

@@ -656,9 +656,13 @@ class FloatingDialog(QDialog):
             self.current_assistant_message.content.setText(updated_text)
             self.current_text = updated_text
         else:
-            # Create a new assistant message if needed
-            self.current_text = text
-            self.current_assistant_message = self.chat_widget.add_message(text, is_user=False)
+            # Only create a new assistant message if we have actual content
+            if text.strip():
+                self.current_text = text
+                self.current_assistant_message = self.chat_widget.add_message(text, is_user=False)
+            else:
+                # Just store the text without creating a message yet
+                self.current_text = text
             
         # Process events to keep UI responsive without recursive repaints
         QApplication.processEvents()

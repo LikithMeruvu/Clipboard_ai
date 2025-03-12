@@ -13,7 +13,7 @@ class Config:
             "notes_hotkey": "ctrl+shift+.",  # New hotkey for notes
             "image_hotkey": "ctrl+shift+,",  # New hotkey for image processing
             "selected_model": "deepseek-r1:8b",
-            "image_model": "erwan2/DeepSeek-Janus-Pro-7B:latest",
+            "image_model": "llava:latest",
             "ollama_host": "http://localhost:11434",
             "notification_duration": 5000,  # milliseconds
             "history_enabled": True,
