@@ -2,10 +2,9 @@
 
 from PyQt6.QtWidgets import (
     QDialog, QVBoxLayout, QHBoxLayout, QLabel,
-    QComboBox, QRadioButton, QPushButton, QButtonGroup,
-    QLineEdit, QGroupBox
+    QComboBox, QRadioButton, QPushButton, QLineEdit, QGroupBox
 )
-from PyQt6.QtCore import Qt
+from PyQt6.QtCore import Qt, pyqtSignal
 from ..config import config
 from ..ollama_integration import ollama
 
@@ -17,6 +16,9 @@ class SettingsDialog(QDialog):
       3. Change the hotkeys for text and image
       4. (Optional) Refresh the list of Ollama models
     """
+    # New signal to indicate that settings have been updated
+    settings_updated = pyqtSignal()
+
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setWindowTitle("Clipboard AI Settings")
@@ -57,7 +59,7 @@ class SettingsDialog(QDialog):
         # Image hotkey
         image_hotkey_layout = QHBoxLayout()
         image_hotkey_label = QLabel("Image Hotkey:")
-        self.image_hotkey_input = QLineEdit(config.get("image_hotkey", "ctrl+shift+,"))
+        self.image_hotkey_input = QLineEdit(config.get("image_hotkey", "ctrl+shift+,"))  # default comma
         image_hotkey_layout.addWidget(image_hotkey_label)
         image_hotkey_layout.addWidget(self.image_hotkey_input)
         hotkey_layout.addLayout(image_hotkey_layout)
@@ -112,7 +114,6 @@ class SettingsDialog(QDialog):
 
     def refresh_models(self):
         """Refresh the list of available models and populate both combos."""
-        # Clear combos
         self.text_model_combo.clear()
         self.image_model_combo.clear()
 
@@ -130,15 +131,15 @@ class SettingsDialog(QDialog):
             self.text_model_combo.addItem(model_name)
             self.image_model_combo.addItem(model_name)
 
-        # Try to select the current config value
+        # Try to select the current config value for text model
         idx_text = self.text_model_combo.findText(current_text_model)
         if idx_text >= 0:
             self.text_model_combo.setCurrentIndex(idx_text)
         else:
-            # If not found, insert it as a fallback
             self.text_model_combo.insertItem(0, current_text_model)
             self.text_model_combo.setCurrentIndex(0)
 
+        # Try to select the current config value for image model
         idx_image = self.image_model_combo.findText(current_image_model)
         if idx_image >= 0:
             self.image_model_combo.setCurrentIndex(idx_image)
@@ -147,34 +148,25 @@ class SettingsDialog(QDialog):
             self.image_model_combo.setCurrentIndex(0)
 
     def save_settings(self):
-        """Save the current settings to config and re-register hotkeys if needed."""
+        """Save the current settings to config and notify the main app to update state."""
         # ===== Processing Mode =====
         mode = "auto" if self.auto_mode.isChecked() else "manual"
         config.set("processing_mode", mode)
 
         # ===== Hotkeys =====
-        text_hotkey = self.text_hotkey_input.text().strip()
-        if not text_hotkey:
-            # Default if empty
-            text_hotkey = "ctrl+shift+u"
-            self.text_hotkey_input.setText(text_hotkey)
+        text_hotkey = self.text_hotkey_input.text().strip() or "ctrl+shift+u"
         config.set("hotkey", text_hotkey)
 
-        image_hotkey = self.image_hotkey_input.text().strip()
-        if not image_hotkey:
-            image_hotkey = "ctrl+shift+,"
-            self.image_hotkey_input.setText(image_hotkey)
+        image_hotkey = self.image_hotkey_input.text().strip() or "ctrl+shift(,) "  # default comma
         config.set("image_hotkey", image_hotkey)
 
         # ===== Models =====
-        selected_text_model = self.text_model_combo.currentText()
-        if not selected_text_model:
-            selected_text_model = "deepseek-r1:8b"
+        selected_text_model = self.text_model_combo.currentText() or "deepseek-r1:8b"
         config.set("selected_model", selected_text_model)
 
-        selected_image_model = self.image_model_combo.currentText()
-        if not selected_image_model:
-            selected_image_model = "llava:latest"
+        selected_image_model = self.image_model_combo.currentText() or "llava:latest"
         config.set("image_model", selected_image_model)
 
+        # Emit a signal so the main application can re-register hotkeys and update its state
+        self.settings_updated.emit()
         self.accept()
