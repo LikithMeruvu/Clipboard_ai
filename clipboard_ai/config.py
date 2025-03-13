@@ -12,8 +12,8 @@ class Config:
             "hotkey": "ctrl+shift+u",
             "notes_hotkey": "ctrl+shift+.",  # New hotkey for notes
             "image_hotkey": "ctrl+shift+,",  # New hotkey for image processing
-            "selected_model": "deepseek-r1:8b",
-            "image_model": "llava:latest",
+            "selected_model": "gemma3:latest",
+            "image_model": "gemma3:latest",
             "ollama_host": "http://localhost:11434",
             "notification_duration": 5000,  # milliseconds
             "history_enabled": True,

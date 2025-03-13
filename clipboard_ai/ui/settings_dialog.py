@@ -34,8 +34,8 @@ class SettingsDialog(QDialog):
             
             # Check for required models
             required_models = {
-                'text': config.get("selected_model", "deepseek-r1:8b"),
-                'image': config.get("image_model", "llava:latest")
+                'text': config.get("selected_model", "gemma3:latest"),
+                'image': config.get("image_model", "gemma3:latest")
             }
             
             available_models = {model.get("name", "") for model in models}

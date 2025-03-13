@@ -41,6 +41,9 @@ class ClipboardAI(QObject):
         # Initialize floating dialog
         self.floating_dialog = FloatingDialog()
         self.floating_dialog.follow_up_submitted.connect(self.handle_follow_up)
+        # Connect clear_chat signal to handle_clear_chat method
+        self.floating_dialog.title_bar.new_chat_btn.clicked.disconnect()
+        self.floating_dialog.title_bar.new_chat_btn.clicked.connect(self.handle_clear_chat)
         self.floating_dialog.hide()  # Ensure it starts hidden
 
         # Initialize system tray
@@ -288,6 +291,20 @@ class ClipboardAI(QObject):
                 self.floating_dialog.chat_widget.scroll_to_bottom()
         except Exception as e:
             self.handle_error(f"Error displaying image response: {str(e)}")
+
+    def handle_clear_chat(self):
+        """Handle clearing the chat and resetting the state."""
+        # First clear the clipboard monitor context to stop any ongoing processing
+        self.clipboard_monitor.clear_context()
+        
+        # Then clear the UI
+        self.floating_dialog.clear_chat()
+        
+        # Instead of hiding, ensure the dialog remains visible
+        # This prevents the window from closing unexpectedly
+        self.floating_dialog.show()
+        self.floating_dialog.raise_()
+        self.floating_dialog.activateWindow()
 
     def signal_handler(self, sig, frame):
         """Handle system signals for clean shutdown."""

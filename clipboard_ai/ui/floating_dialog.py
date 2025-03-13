@@ -48,70 +48,71 @@ class LoadingDots(QLabel):
         self.dots = 0
         self.timer = QTimer(self)
         self.timer.timeout.connect(self.update_dots)
-        self.timer.start(500)  # Update every 500ms
         self.setText("...")
         
     def update_dots(self):
         self.dots = (self.dots + 1) % 4
         self.setText("." * self.dots)
         
+    def start(self):
+        self.timer.start(500)  # Update every 500ms
+        
     def stop(self):
         self.timer.stop()
         self.setText("")
 
-class ThinkingWidget(QFrame):
-    def __init__(self, parent=None):
-        super().__init__(parent)
+class ThinkingWidget(QWidget):
+    def __init__(self):
+        super().__init__()
         self.setObjectName("thinkingWidget")
-        self.expanded = False
         
-        layout = QVBoxLayout(self)
-        layout.setContentsMargins(10, 5, 10, 5)
+        # Create layout
+        layout = QHBoxLayout()
+        layout.setContentsMargins(10, 10, 10, 10)
+        layout.setSpacing(10)
         
-        header_layout = QHBoxLayout()
+        # Create thinking icon and label
+        self.thinking_icon = QLabel("🤖")
+        self.thinking_icon.setObjectName("thinkingIcon")
+        layout.addWidget(self.thinking_icon)
         
-        thinking_layout = QHBoxLayout()
-        self.thinking_icon = QLabel("🤔")
-        self.thinking_label = QLabel("Thinking")
+        self.thinking_label = QLabel("Generating...")
+        self.thinking_label.setObjectName("thinkingLabel")
+        layout.addWidget(self.thinking_label)
+        
+        # Add loading dots animation
         self.loading_dots = LoadingDots()
+        self.loading_dots.setObjectName("loadingDots")
+        layout.addWidget(self.loading_dots)
         
-        thinking_layout.addWidget(self.thinking_icon)
-        thinking_layout.addWidget(self.thinking_label)
-        thinking_layout.addWidget(self.loading_dots)
-        thinking_layout.addStretch()
+        # Add stretch to push everything to the left
+        layout.addStretch()
         
-        header_layout.addLayout(thinking_layout)
+        self.setLayout(layout)
         
-        self.toggle_btn = QPushButton("Show Process")
-        self.toggle_btn.setObjectName("toggleThinkingBtn")
-        self.toggle_btn.clicked.connect(self.toggle_thinking)
-        header_layout.addWidget(self.toggle_btn)
-        
-        layout.addLayout(header_layout)
-        
+        # Initialize thinking content (hidden by default)
         self.thinking_content = QTextEdit()
         self.thinking_content.setObjectName("thinkingContent")
         self.thinking_content.setReadOnly(True)
         self.thinking_content.hide()
-        layout.addWidget(self.thinking_content)
-        
-    def toggle_thinking(self):
-        self.expanded = not self.expanded
-        self.thinking_content.setVisible(self.expanded)
-        self.toggle_btn.setText("Hide Process" if self.expanded else "Show Process")
-        
-    def set_thinking(self, text):
-        self.thinking_content.setText(text)
-        
+
     def start_thinking(self):
-        self.thinking_icon.setText("🤔")
-        self.thinking_label.setText("Thinking")
-        self.loading_dots.timer.start()
-        
+        """Start the thinking animation."""
+        self.thinking_icon.setText("🤖")
+        self.thinking_label.setText("Generating...")
+        self.loading_dots.start()
+
     def stop_thinking(self):
+        """Stop the thinking animation."""
+        self.loading_dots.stop()
         self.thinking_icon.setText("✓")
         self.thinking_label.setText("Complete")
+
+    def set_error(self, error_message: str):
+        """Set error state."""
         self.loading_dots.stop()
+        self.thinking_icon.setText("❌")
+        self.thinking_label.setText("Error")
 
 class ChatMessage(QFrame):
     def __init__(self, is_user=True, parent=None):
@@ -224,7 +225,7 @@ class ChatWidget(QFrame):
         
         self.follow_up_input = QTextEdit()
         self.follow_up_input.setObjectName("followUpInput")
-        self.follow_up_input.setPlaceholderText("Type your follow-up question here... (Press Enter to send, Shift+Enter for new line)")
+        self.follow_up_input.setPlaceholderText("Press Enter for new line, Shift+Enter to send")
         self.follow_up_input.setMaximumHeight(50)  # Reduced from 80 to 50
         self.follow_up_input.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)  # Set fixed vertical size policy
         input_layout.addWidget(self.follow_up_input)
@@ -335,7 +336,7 @@ class ChatWidget(QFrame):
             }
             #copyButton {
                 background: transparent;
-                border: 1px solid rgba(124, 124, 255, 0.5);
+                border: 1px solid rgba(255, 255, 255, 0.5);
                 color: #7c7cff;
                 padding: 4px 10px;
                 border-radius: 4px;
@@ -418,6 +419,10 @@ class FloatingDialog(QDialog):
         # Add chat widget with improved layout
         self.chat_widget = ChatWidget()
         content_layout.addWidget(self.chat_widget)
+        
+        # Add buttons layout
+        self.button_layout = QHBoxLayout()
+        content_layout.addLayout(self.button_layout)
         
         # Connect follow-up button
         self.chat_widget.send_btn.clicked.connect(self.handle_follow_up)
@@ -613,10 +618,15 @@ class FloatingDialog(QDialog):
             }
         """
 
+    def set_thinking_content(self, thinking_text: str):
+        """Update thinking content."""
+        pass
+
     def show_processing(self):
         """Show the dialog in processing state."""
-        # Reset state
-        self.current_text = ""
+        self.show()
+        self.raise_()
+        self.activateWindow()
         self.thinking_widget.thinking_content.clear()
         self.thinking_widget.start_thinking()
         

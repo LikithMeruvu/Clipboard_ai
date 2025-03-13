@@ -38,6 +38,7 @@ class ClipboardMonitor(QObject):
         self.processing_lock = False
         self.clipboard_retry_count = 0
         self.MAX_RETRIES = 3
+        self.last_request_type = None
         
         QTimer.singleShot(0, lambda: self.clipboard.dataChanged.connect(self._on_clipboard_change))
         
@@ -156,6 +157,46 @@ class ClipboardMonitor(QObject):
             self.error_occurred.emit(f"Error in process_on_demand: {str(e)}")
             QApplication.processEvents()
 
+    def clear_context(self):
+        print("Clearing conversation context and state")
+        # First clear data
+        self.current_context.clear()
+        self.last_copied_text = None
+        self.last_copied_image = None
+        self.last_text = ""
+        self.last_request_type = None
+        
+        # Ensure we're not in a locked state
+        self.processing_lock = False
+        
+        # Stop any ongoing image processing
+        self._cleanup_previous_image_processing()
+        
+        # If there's an active text processing thread, stop it properly
+        if hasattr(self, 'text_thread') and self.text_thread and self.text_thread.isRunning():
+            try:
+                # Disconnect any signals to prevent callbacks during shutdown
+                if hasattr(self, 'text_worker') and self.text_worker:
+                    try:
+                        self.text_worker.result_ready.disconnect()
+                        self.text_worker.stream_chunk.disconnect()
+                        self.text_worker.error.disconnect()
+                        self.text_worker.finished.disconnect()
+                    except Exception:
+                        pass  # Ignore if already disconnected
+                
+                # Request the thread to quit and wait longer for it to finish
+                self.text_thread.quit()
+                if not self.text_thread.wait(2000):  # Wait up to 2 seconds
+                    print("Text thread did not terminate gracefully, forcing termination")
+                    self.text_thread.terminate()
+                    self.text_thread.wait(1000)  # Give it another second
+            except Exception as e:
+                print(f"Error cleaning up text thread: {str(e)}")
+        
+        # Process events to ensure UI remains responsive
+        QApplication.processEvents()
+
     def process_text(self, text: str, is_follow_up: bool = False):
         try:
             self.processing_started.emit()
@@ -170,6 +211,7 @@ class ClipboardMonitor(QObject):
             self.text_worker.finished.connect(self.text_worker.deleteLater)
             self.text_thread.finished.connect(self.text_thread.deleteLater)
             self.text_thread.start()
+            self.last_request_type = "text"  # Set the request type for text processing
         except Exception as e:
             self.error_occurred.emit(f"Error processing text: {str(e)}")
 
@@ -190,7 +232,15 @@ class ClipboardMonitor(QObject):
         try:
             self.current_context.append((question, "user"))
             QApplication.processEvents()
-            self.process_text(question, is_follow_up=True)
+            if self.last_request_type == "image" and self.last_copied_image is not None:
+                print("Processing follow-up for image")
+                self.process_image(self.last_copied_image, notes=question)
+            elif self.last_request_type == "text":
+                print("Processing follow-up for text")
+                self.process_text(question, is_follow_up=True)
+            else:
+                self.error_occurred.emit("No previous context found for follow-up")
+                return
         except Exception as e:
             self.error_occurred.emit(f"Error processing follow-up: {str(e)}")
 
@@ -200,6 +250,9 @@ class ClipboardMonitor(QObject):
             return
         try:
             self.processing_lock = True
+            # Clear previous context to ensure we're starting fresh
+            self.current_context.clear()
+            
             user_message = "[Image Analysis Request]\n"
             if notes:
                 user_message += f"Question: {notes}\n"
@@ -207,6 +260,10 @@ class ClipboardMonitor(QObject):
             self.current_context.append((user_message, "user"))
             self.image_processed_signal.emit("", image)
             self.processing_started.emit()
+            
+            # Clean up any previous image processing before starting a new one
+            self._cleanup_previous_image_processing()
+            
             self.worker_thread = QThread()
             self.worker = ImageWorker(image, notes)
             self.worker.moveToThread(self.worker_thread)
@@ -220,6 +277,9 @@ class ClipboardMonitor(QObject):
             self.worker.stream_chunk.connect(self._handle_stream)
             self.image_progress.emit(0)
             self.worker_thread.start()
+            
+            # Set the last request type to image
+            self.last_request_type = "image"
         except Exception as e:
             self.error_occurred.emit(f"Error setting up image processing: {str(e)}")
             self.processing_lock = False
@@ -252,6 +312,7 @@ class ClipboardMonitor(QObject):
             )
             self.current_context = [(combined_text, "user")]
             self.process_text(combined_text)
+            self.last_request_type = "text"
             self.last_copied_text = None
         except Exception as e:
             self.error_occurred.emit(f"Error processing with notes: {str(e)}")
@@ -307,6 +368,7 @@ class ClipboardMonitor(QObject):
         try:
             self.processing_lock = True
             self.process_image(self.last_copied_image, notes)
+            self.last_request_type = "image"
             self.last_copied_image = None
         except Exception as e:
             self.error_occurred.emit(f"Error processing image with notes: {str(e)}")
@@ -315,11 +377,8 @@ class ClipboardMonitor(QObject):
 
     def _handle_image_response(self, response: str, image: QImage = None, notes: str = None):
         try:
-            user_message = "[Image Analysis Request]\n"
-            if notes:
-                user_message += f"Question: {notes}\n"
-            user_message += "[Attached Image]"
-            self.current_context.append((user_message, "user"))
+            # Don't add the user message again since we already added it in process_image
+            # Just add the assistant response
             self.current_context.append((response, "assistant"))
             self.content_processed.emit(response)
             if image:
