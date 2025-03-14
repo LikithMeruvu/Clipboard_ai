@@ -624,25 +624,12 @@ class FloatingDialog(QDialog):
 
     def show_processing(self):
         """Show the dialog in processing state."""
-        self.show()
-        self.raise_()
-        self.activateWindow()
-        self.thinking_widget.thinking_content.clear()
-        self.thinking_widget.start_thinking()
-        
-        # Don't create an empty assistant message yet - we'll create it when we have content
-        self.current_assistant_message = None
-        
-        # Show and position the dialog if not visible
         if not self.isVisible():
             self.position_on_screen()
             self.show()
-            
-        # Ensure dialog is visible and focused
         self.raise_()
         self.activateWindow()
-        
-        # Process events to ensure UI updates
+        self.current_assistant_message = None
         QApplication.processEvents()
 
     def update_streaming(self, text: str):
