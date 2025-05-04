@@ -56,13 +56,7 @@
 * **Extensible** – modular worker threads; just swap models or add new prompts to extend functionality.
 * **Private config** – JSON settings stored in platform‑correct user config dir (thanks `appdirs`).
 
----
 
-## Demo
-
-| Auto‑mode instant summary                      | Image caption with notes                        | Follow‑up Q\&A                            |
-| ---------------------------------------------- | ----------------------------------------------- | ----------------------------------------- |
-| ![auto‑text](.github/assets/demo_autotext.gif) | ![image‑caption](.github/assets/demo_image.gif) | ![chat](.github/assets/demo_followup.gif) |
 
 ---
 
