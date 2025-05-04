@@ -1,32 +1,12 @@
-**Planning search queries**
 
-I’m brainstorming a list of search queries based on the user's topics of interest. They seem to want a comprehensive list of sources and citations. I’ll make sure to include both documentation types (like GitHub, PyQt6, PyInstaller) and related guides. The goal is to gather at least 15 high-quality sources to cover all these topics thoroughly — including READMEs, cross-platform packaging, system tray applications, and licenses. It’s clear I want to focus on detailed docs and examples.
-
-
-**Finalizing search queries**
-
-I’ll run a batch of search queries based on various documentation and guides, pulling from multiple sources ranging from GitHub best practices to library documentation on PyQt, PyInstaller, and more. There’s a slight worry some of the results might not be directly relevant, but I have plenty to work with. The goal is to gather at least 15 high-quality sources to properly craft the README, with citations referencing each source. I'll need to integrate them coherently, but the core approach is to cover all bases.
-
-**Crafting README with citations**
-
-I’m thinking through how to integrate citations into the README. Since it’s inside a code block, I can’t directly embed citations there, as it could break the formatting. I’ll have to place them outside the code section, perhaps in a "References" or "Further Reading" section. Citations should follow each sentence where external sources are referenced, but I’ll keep the content within the README code block original and example-focused. A footnote-comment approach might even work for non-visible citations. I’ll need to make sure the guidelines are all followed!
-
-
-Thought for 37 seconds
-
-
-Below is a production‑grade **README.md** you can drop straight into **`LikithMeruvu/Clipboard_ai`**.
-It follows current GitHub best‑practice structure (badges, clear value prop, install matrix, architecture diagram, security disclaimers, contribution guide, etc.) and is long enough to double as product documentation. Replace image placeholders (`.github/assets/...`) with real screenshots or GIFs when you have them.
-
-````markdown
-<!-- Banner -->
 <p align="center">
   <img src="https://raw.githubusercontent.com/LikithMeruvu/Clipboard_ai/main/.github/assets/banner.png" alt="Clipboard AI banner" width="90%">
 </p>
 
-<h1 align="center">Clipboard AI</h1>
+# Clipboard AI
+
 <p align="center">
-  <b>Turn copy‑paste into super‑powers.</b><br>
+  <strong>Turn copy‑paste into super‑powers.</strong><br>
   Analyse, summarise and transform text <em>and</em> images in your clipboard using local LLMs – in one hot‑key – without sending your data anywhere.
 </p>
 
@@ -42,6 +22,7 @@ It follows current GitHub best‑practice structure (badges, clear value prop, i
 ---
 
 ## Table of Contents
+
 1. [Key Features](#key-features)
 2. [Demo](#demo)
 3. [How It Works](#how-it-works)
@@ -59,27 +40,34 @@ It follows current GitHub best‑practice structure (badges, clear value prop, i
 ---
 
 ## Key Features
-- **System‑tray daemon** – lives quietly in Windows & macOS menu bars; built with PyQt6 and `QSystemTrayIcon`.
-- **Global hot‑keys** – defaults:  
-  `Ctrl + Shift + U` (text) • `Ctrl + Shift + O` (image) • `Ctrl + Shift + .` (notes) – all user‑configurable.
-- **Auto vs Manual** – let Clipboard AI auto‑process every copy or only when you press a key.
-- **Multimodal** – processes plain text, rich text and images (captured or files) with vision‑capable models.
-- **Contextual chat** – follow‑up questions stay in‑memory so you can iterate without re‑copying.
-- **100 % Local** – powered by [Ollama](https://ollama.ai) models: no cloud calls, so your data never leaves the machine.
-- **Cross‑platform packaging** – single‑file executables via PyInstaller (Windows) and py2app (macOS) plus Inno Setup installer.
-- **Extensible** – modular worker threads; just swap models or add new prompts to extend functionality.
-- **Private config** – JSON settings stored in platform‑correct user config dir (thanks `appdirs`).
+
+* **System‑tray daemon** – lives quietly in Windows & macOS menu bars; built with PyQt6 and `QSystemTrayIcon`.
+* **Global hot‑keys** – defaults:
+
+  * `Ctrl + Shift + U` (text)
+  * `Ctrl + Shift + O` (image)
+  * `Ctrl + Shift + .` (notes)
+    *(all user‑configurable).*
+* **Auto vs Manual** – let Clipboard AI auto‑process every copy or only when you press a key.
+* **Multimodal** – processes plain text, rich text and images (captured or files) with vision‑capable models.
+* **Contextual chat** – follow‑up questions stay in‑memory so you can iterate without re‑copying.
+* **100 % Local** – powered by [Ollama](https://ollama.ai) models: no cloud calls, so your data never leaves the machine.
+* **Cross‑platform packaging** – single‑file executables via PyInstaller (Windows) and py2app (macOS) plus Inno Setup installer.
+* **Extensible** – modular worker threads; just swap models or add new prompts to extend functionality.
+* **Private config** – JSON settings stored in platform‑correct user config dir (thanks `appdirs`).
 
 ---
 
 ## Demo
-| Auto‑mode instant summary | Image caption with notes | Follow‑up Q&A |
-|---|---|---|
+
+| Auto‑mode instant summary                      | Image caption with notes                        | Follow‑up Q\&A                            |
+| ---------------------------------------------- | ----------------------------------------------- | ----------------------------------------- |
 | ![auto‑text](.github/assets/demo_autotext.gif) | ![image‑caption](.github/assets/demo_image.gif) | ![chat](.github/assets/demo_followup.gif) |
 
 ---
 
 ## How It Works
+
 ```mermaid
 flowchart LR
   subgraph UI
@@ -92,10 +80,10 @@ flowchart LR
   Ollama -->|stream| Dialog
   Tray --> Dialog
   Settings --> Tray
-````
+```
 
 1. **ClipboardMonitor** watches clipboard via Qt’s `QClipboard` and emits signals when it detects new text/image.
-2. **Worker threads** (TextWorker & ImageWorker) call Ollama’s OpenAI‑compatible REST endpoints, streaming tokens back.
+2. **Worker threads** (TextWorker & ImageWorker) call Ollama’s REST endpoints, streaming tokens back.
 3. **FloatingDialog** displays a thinking indicator then streams the response; users can ask follow‑up questions that keep context.
 4. **SystemTray** menu lets you pause, switch Auto/Manual mode, open Settings, or quit.
 
@@ -103,7 +91,7 @@ flowchart LR
 
 ## Installation
 
-### 1. Prerequisites
+### Prerequisites
 
 | Dependency | Minimum  | Notes                                                 |
 | ---------- | -------- | ----------------------------------------------------- |
@@ -111,16 +99,14 @@ flowchart LR
 | **Ollama** | latest   | `brew install ollama` / Windows MSI / Docker          |
 | **GPU**    | Optional | CPU works; GPU + 8 GB VRAM recommended for >7B models |
 
-### 2. Grab a Release (recommended)
+### Grab a Release (recommended)
 
-```text
-🪟  Windows 10+  →  ClipboardAI‑Setup‑x.y.z.exe
-🍎  macOS 12+    →  Clipboard AI‑x.y.z.dmg
-```
+* 🪟 **Windows 10+** → `ClipboardAI-Setup-x.y.z.exe`
+* 🍎 **macOS 12+** → `Clipboard AI-x.y.z.dmg`
 
 Download from the **[Releases](https://github.com/LikithMeruvu/Clipboard_ai/releases)** page, install, run. The tray icon appears on first launch.
 
-### 3. Build from Source
+### Build from Source
 
 ```bash
 git clone https://github.com/LikithMeruvu/Clipboard_ai.git
@@ -151,13 +137,11 @@ Hot‑keys are editable in **Tray → Settings**.
 
 A JSON file is created on first run at:
 
-```text
-Windows : %APPDATA%\clipboard_ai\config.json
-macOS   : ~/Library/Application Support/clipboard_ai/config.json
-Linux   : ~/.config/clipboard_ai/config.json
-```
+* **Windows** `%APPDATA%\clipboard_ai\config.json`
+* **macOS** `~/Library/Application Support/clipboard_ai/config.json`
+* **Linux** `~/.config/clipboard_ai/config.json`
 
-Sample:
+Example:
 
 ```jsonc
 {
@@ -188,25 +172,25 @@ ollama pull gemma3:latest
 ollama pull deepseek-r1:8b
 ```
 
-See **Settings → Model Selection** to swap.
+Switch models in **Settings → Model Selection**.
 
 ---
 
 ## Security & Privacy
 
 Clipboard AI never transmits clipboard data over the internet. All inference happens via Ollama on `localhost`.
-No analytics, no telemetry, no 3rd‑party servers.
+No analytics, no telemetry, no 3rd‑party servers. You control the models and the data.
 
 ---
 
 ## Troubleshooting
 
-| Symptom                        | Fix                                                                       |
-| ------------------------------ | ------------------------------------------------------------------------- |
-| **“Cannot connect to Ollama”** | Run `ollama serve` first; ensure `config.json` points to the correct port |
-| **Hot‑key not working**        | Check for collisions with other apps; edit shortcut in Settings           |
-| **Large image stalls**         | Images >4K are down‑scaled automatically; ensure you have enough RAM/VRAM |
-| **PyInstaller build fails**    | Use Python 3.10+, upgrade PyInstaller, add `--hidden-import=PyQt6.sip`    |
+| Symptom                        | Fix                                                                    |
+| ------------------------------ | ---------------------------------------------------------------------- |
+| **“Cannot connect to Ollama”** | Run `ollama serve`; ensure `config.json` points to correct port        |
+| **Hot‑key not working**        | Check for collisions with other apps; edit shortcut in Settings        |
+| **Large image stalls**         | Images > 4K are down‑scaled automatically; ensure enough RAM/VRAM      |
+| **PyInstaller build fails**    | Use Python 3.10+, upgrade PyInstaller, add `--hidden-import=PyQt6.sip` |
 
 ---
 
@@ -216,13 +200,14 @@ No analytics, no telemetry, no 3rd‑party servers.
 * [ ] Clipboard history sidebar
 * [ ] Custom prompt templates
 * [ ] Plugin SDK for speciality tasks (OCR, code lint, translation)
-  See the [open issues](https://github.com/LikithMeruvu/Clipboard_ai/issues) for full backlog.
+
+See the [open issues](https://github.com/LikithMeruvu/Clipboard_ai/issues) for the full backlog.
 
 ---
 
 ## Contributing
 
-Pull requests are welcome! Please:
+Pull requests are welcome!
 
 1. Open an issue to discuss major changes.
 2. Fork → `git checkout -b feat/your-feature`.
@@ -230,13 +215,13 @@ Pull requests are welcome! Please:
 4. Add/adjust unit tests.
 5. Submit PR – the CI will run on GitHub Actions.
 
-By contributing you agree to abide by the **Contributor Covenant Code of Conduct** (see `CODE_OF_CONDUCT.md`).
+By contributing you agree to follow our **Contributor Covenant Code of Conduct** (see `CODE_OF_CONDUCT.md`).
 
 ---
 
 ## License
 
-Clipboard AI is released under the **MIT License** – see [`LICENSE`](LICENSE) for details.
+Clipboard AI is released under the **MIT License** – see [`LICENSE`](LICENSE) for full text.
 
 ---
 
@@ -251,31 +236,4 @@ Clipboard AI is released under the **MIT License** – see [`LICENSE`](LICENSE)
 | Icons       | [HeroIcons](https://heroicons.com)               |
 | Maintainer  | [@LikithMeruvu](https://github.com/LikithMeruvu) |
 
-<p align="center"><i>Clipboard AI – because copy‑paste deserves super‑powers.</i></p>
-```
-
----
-
-### References
-
-* README structure & badge guidelines ([GitHub][1], [GitHub Docs][2], [Open Source Guides][3], [Shields.io | Shields.io][4])
-* Qt system‑tray & clipboard classes underpin tray/monitor design ([Qt Documentation][5], [Qt Documentation][6])
-* PyInstaller & cross‑platform packaging guidance ([Python GUIs][7])
-* Ollama local LLM API & OpenAI compatibility used for on‑device inference ([Ollama][8])
-* Gemma 3 and DeepSeek model metadata for default model choices ([Ollama][9], [Ollama][10])
-* `keyboard` & global hot‑keys library capabilities inspiring key‑binding section ([PyPI][11])
-* `appdirs` best‑practice for per‑user config location ([PyPI][12])
-* MIT licence overview ([PyPI][12])
-
-[1]: https://github.com/jehna/readme-best-practices?utm_source=chatgpt.com "GitHub - jehna/readme-best-practices: Best practices for writing a ..."
-[2]: https://docs.github.com/en/get-started/writing-on-github/getting-started-with-writing-and-formatting-on-github/basic-writing-and-formatting-syntax?utm_source=chatgpt.com "Basic writing and formatting syntax - GitHub Docs"
-[3]: https://opensource.guide/how-to-contribute/?utm_source=chatgpt.com "How to Contribute to Open Source"
-[4]: https://shields.io/?utm_source=chatgpt.com "Shields.io | Shields.io"
-[5]: https://doc.qt.io/qtforpython-6/PySide6/QtWidgets/QSystemTrayIcon.html?utm_source=chatgpt.com "PySide6.QtWidgets.QSystemTrayIcon - Qt for Python"
-[6]: https://doc.qt.io/qtforpython-6/PySide6/QtGui/QClipboard.html?utm_source=chatgpt.com "PySide6.QtGui.QClipboard - Qt for Python"
-[7]: https://www.pythonguis.com/tutorials/packaging-pyqt5-pyside2-applications-windows-pyinstaller/?utm_source=chatgpt.com "Packaging PyQt5 applications for Windows with PyInstaller & InstallForge"
-[8]: https://registry.ollama.ai/blog/openai-compatibility?utm_source=chatgpt.com "OpenAI compatibility · Ollama Blog"
-[9]: https://registry.ollama.ai/library/gemma3/blobs/aeda25e63ebd?utm_source=chatgpt.com "gemma3/model - registry.ollama.ai"
-[10]: https://registry.ollama.ai/library/deepseek-r1/blobs/96c415656d37?utm_source=chatgpt.com "deepseek-r1/model - registry.ollama.ai"
-[11]: https://pypi.org/project/keyboard/?utm_source=chatgpt.com "keyboard - PyPI"
-[12]: https://pypi.org/project/appdirs/?utm_source=chatgpt.com "appdirs - PyPI"
+<p align="center"><em>Clipboard AI – because copy‑paste deserves super‑powers.</em></p>
